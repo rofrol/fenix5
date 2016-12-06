@@ -7,25 +7,38 @@ public class EnemeyTargeter : MonoBehaviour
 
     List<Enemy> enemiesInRange = new List<Enemy>();
 
+    IEnumerator currentEnumerator = null;
+
+    IEnumerator TargetClosestEnemy()
+    {
+        while (true)
+        {
+            Enemy closestEnemy = null;
+            if (enemiesInRange.Count > 0)
+                closestEnemy = enemiesInRange[0];
+
+            foreach (Enemy enemy in enemiesInRange)
+            {
+                if (Vector3.Distance(this.transform.position, closestEnemy.transform.position) >
+                    Vector3.Distance(this.transform.position, enemy.transform.position))
+                {
+                    closestEnemy = enemy;
+                }
+            }
+
+            if (closestEnemy != null)
+            {
+                Debug.LogError(closestEnemy.name);
+                this.transform.LookAt(closestEnemy.transform.position);
+            }
+
+            yield return new WaitForSeconds(0.5f);
+        }
+    }
+
     void Update()
     {
-        Enemy closestEnemy = null;
-        if (enemiesInRange.Count > 0)
-            closestEnemy = enemiesInRange[0];
 
-        foreach(Enemy enemy in enemiesInRange)
-        {
-            if(Vector3.Distance(this.transform.position, closestEnemy.transform.position) >
-                Vector3.Distance(this.transform.position, enemy.transform.position)) {
-                closestEnemy = enemy;
-            }
-        }
-
-        if (closestEnemy != null)
-        {
-            Debug.LogError(closestEnemy.name);
-            this.transform.LookAt(closestEnemy.transform.position);
-        }
             
     }
 
@@ -37,6 +50,12 @@ public class EnemeyTargeter : MonoBehaviour
         if (enemy != null && !enemiesInRange.Contains(enemy))
         {
             enemiesInRange.Add(enemy);
+
+            if(currentEnumerator == null)
+            {
+                currentEnumerator = TargetClosestEnemy();
+                StartCoroutine(currentEnumerator);
+            }
         }
         else
             Debug.LogError(enemy);
@@ -50,6 +69,12 @@ public class EnemeyTargeter : MonoBehaviour
         if (enemy != null && enemiesInRange.Contains(enemy))
         {
             enemiesInRange.Remove(enemy);
+
+            if(currentEnumerator != null)
+            {
+                StopCoroutine(currentEnumerator);
+                currentEnumerator = null;
+            }
         }
         else
             Debug.LogError(enemy);
